@@ -4,13 +4,13 @@ import { multiply } from './multiply';
 const observables$ = from([1, 2, 3, 4, 5]);
 
 const subscriber = {
-	next: (value) => {
+	next: (value: number) => {
 		console.log(value);
 	},
 	complete: () => {
 		console.log('done!');
 	},
-	error: (value) => {
+	error: (value: number) => {
 		console.log(value);
 	},
 };
