@@ -21,17 +21,11 @@ class DoubleSubscriber extends Subscriber<number> {
 	}
 }
 
-observables$
-	.pipe((source) => {
-		// don't do this for production environments.
-		// this is only for educational purposes.
-		const o$ = new Observable<number>();
-		o$.source = source;
-		o$.operator = {
-			call(sub, source) {
-				source.subscribe(new DoubleSubscriber(sub));
-			},
-		};
-		return o$;
-	})
-	.subscribe(subscriber);
+const double = (source: Observable<any>) =>
+	source.lift({
+		call(sub: Subscriber<number>, source: Observable<number>) {
+			source.subscribe(new DoubleSubscriber(sub));
+		},
+	});
+
+observables$.pipe(double).subscribe(subscriber);
