@@ -1,4 +1,4 @@
-import { from, Subscriber } from 'rxjs';
+import { from, Observable, Subscriber } from 'rxjs';
 
 const observables$ = from([1, 2, 3, 4, 5]);
 
@@ -21,4 +21,17 @@ class DoubleSubscriber extends Subscriber<number> {
 	}
 }
 
-observables$.subscribe(new DoubleSubscriber(subscriber));
+observables$
+	.pipe((source) => {
+		// don't do this for production environments.
+		// this is only for educational purposes.
+		const o$ = new Observable<number>();
+		o$.source = source;
+		o$.operator = {
+			call(sub, source) {
+				source.subscribe(new DoubleSubscriber(sub));
+			},
+		};
+		return o$;
+	})
+	.subscribe(subscriber);
