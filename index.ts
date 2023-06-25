@@ -1,4 +1,5 @@
 import { from, Observable, Subscriber } from 'rxjs';
+import { multiply } from './multiply';
 
 const observables$ = from([1, 2, 3, 4, 5]);
 
@@ -29,3 +30,7 @@ const double = (source: Observable<any>) =>
 	});
 
 observables$.pipe(double).subscribe(subscriber);
+
+observables$.pipe(multiply(3)).subscribe(subscriber);
+
+observables$.pipe(multiply(4)).subscribe(subscriber);
