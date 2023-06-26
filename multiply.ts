@@ -1,4 +1,8 @@
-import { map } from './utils/map';
+import { pipe } from 'rxjs';
+import { map, filter } from 'rxjs/operators';
 
 export const multiply = (number: number) =>
-	map((value: number) => value * number);
+	pipe(
+		map((value: number) => value * number),
+		filter((value: number) => value < 10)
+	);
