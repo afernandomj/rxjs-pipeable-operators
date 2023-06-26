@@ -1,8 +1,9 @@
 import { Observable, Subscriber, fromEvent, of } from 'rxjs';
 import { delay, mergeMap, scan } from 'rxjs/operators';
 
-class MySwitchMapSubscriber extends Subscriber<any> {
+class MyConcatMapSubscriber extends Subscriber<any> {
 	innerSubscription: any;
+	buffer: Array<any> = [];
 
 	constructor(sub: Subscriber<any>, private fn: any) {
 		super(sub);
@@ -11,35 +12,41 @@ class MySwitchMapSubscriber extends Subscriber<any> {
 
 	_next(value: any): void {
 		console.log(`outer ${value}`);
-		const o$ = this.fn(value);
+		const { isStopped } = this.innerSubscription || { isStopped: true };
 
-		// removing this, turn this class into a mergemap
-		if (this.innerSubscription) {
-			// this will cancel previous inner values called,
-			// and only shows the last inner value that was called.
-			this.innerSubscription.unsubscribe();
+		if (!isStopped) {
+			this.buffer = [...this.buffer, value];
+		} else {
+			const o$ = this.fn(value);
+
+			this.innerSubscription = o$.subscribe({
+				next: (value: any) => {
+					this.destination.next && this.destination.next(value);
+				},
+				complete: () => {
+					console.log(this.buffer);
+					if (this.buffer.length) {
+						const [first, ...rest] = this.buffer;
+						this.buffer = rest;
+						this.next(first);
+					}
+				},
+			});
 		}
-
-		this.innerSubscription = o$.subscribe({
-			next: (value: any) => {
-				console.log(`inner ${value}`);
-				this.destination.next && this.destination.next(value);
-			},
-		});
 	}
 }
 
-const mySwitchMap = (fn: any) => (source: Observable<any>) =>
+const myConcatMap = (fn: any) => (source: Observable<any>) =>
 	source.lift({
 		call(sub, source) {
-			source.subscribe(new MySwitchMapSubscriber(sub, fn));
+			source.subscribe(new MyConcatMapSubscriber(sub, fn));
 		},
 	});
 
 const observable$ = fromEvent(document, 'click').pipe(
 	scan((i) => i + 1, 0),
 	// mergeMap((value) => of(value).pipe(delay(500)))
-	mySwitchMap((value: any) => of(value).pipe(delay(500)))
+	myConcatMap((value: any) => of(value).pipe(delay(500)))
 );
 
 const subscriber = {
