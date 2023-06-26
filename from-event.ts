@@ -1,5 +1,5 @@
 import { Observable, Subscriber, fromEvent, of } from 'rxjs';
-import { delay, mergeMap, scan } from 'rxjs/operators';
+import { delay, mergeMap, scan, takeUntil } from 'rxjs/operators';
 
 class MyConcatMapSubscriber extends Subscriber<any> {
 	innerSubscription: any;
@@ -32,6 +32,7 @@ class MyConcatMapSubscriber extends Subscriber<any> {
 					}
 				},
 			});
+			this.add(this.innerSubscription);
 		}
 	}
 }
@@ -46,7 +47,8 @@ const myConcatMap = (fn: any) => (source: Observable<any>) =>
 const observable$ = fromEvent(document, 'click').pipe(
 	scan((i) => i + 1, 0),
 	// mergeMap((value) => of(value).pipe(delay(500)))
-	myConcatMap((value: any) => of(value).pipe(delay(500)))
+	myConcatMap((value: any) => of(value).pipe(delay(500))),
+	takeUntil(fromEvent(document, 'keydown')) // stop concatMap if press a key event
 );
 
 const subscriber = {
